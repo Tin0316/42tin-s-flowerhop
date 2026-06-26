@@ -1,0 +1,1944 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>42燕婷有限公司 | 質感線上花店與管理後台</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts - Playfair Display & Noto Sans TC -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght=300;400;500;700&family=Playfair+Display:ital,wght=0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fefcf0',  /* 暖柔白 */
+                            100: '#fdf9c7', /* 淺暖黃 */
+                            200: '#fbf08a', /* 陽光黃 */
+                            300: '#f9e24f', /* 麥穗金 */
+                            400: '#f4cc1c', /* 金盞花黃 */
+                            500: '#dfaf0c', /* 蜂蜜金 */
+                            600: '#b98c07', /* 焙暖金 */
+                            700: '#926b05', /* 琥珀褐 */
+                            800: '#735306', /* 焦糖色 */
+                            900: '#5a4208', /* 泥土深褐 */
+                        },
+                        stone: {
+                            850: '#201c1a'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans TC', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans TC', 'sans-serif';
+            background-color: #fdfdfa;
+        }
+        .serif-font {
+            font-family: 'Playfair Display', 'serif';
+        }
+        /* 防止 Navbar 被主內容遮擋或點擊穿透 */
+        nav {
+            position: relative !important;
+            z-index: 9999 !important;
+            pointer-events: auto !important;
+        }
+        /* 隱藏捲軸但保持滾動功能 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* 瀏覽器列印專用媒體查詢 */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printArea, #printArea * {
+                visibility: visible;
+            }
+            #printArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-stone-800 flex flex-col min-h-screen">
+
+    <!-- 導覽列 Navigation -->
+    <nav class="bg-white border-b border-stone-100 shadow-sm no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <!-- 品牌標誌 -->
+                <div class="flex-shrink-0 flex items-center cursor-pointer" onclick="switchPage('home')">
+                    <span class="serif-font text-2xl lg:text-3xl font-semibold tracking-wider text-brand-700">42燕婷有限公司</span>
+                    <span class="text-xs bg-brand-100 text-brand-700 px-2.5 py-0.5 rounded-full ml-2 font-medium">官方空間</span>
+                </div>
+
+                <!-- 導覽選單 (桌面端) -->
+                <div class="hidden md:flex space-x-8 text-sm font-medium tracking-wide">
+                    <a href="javascript:void(0)" onclick="switchPage('home')" class="text-stone-800 hover:text-brand-600 px-1 py-2 transition">首頁探索</a>
+                    <a href="javascript:void(0)" onclick="filterCategory('all')" class="text-stone-500 hover:text-brand-600 px-1 py-2 transition">所有花作</a>
+                    <a href="javascript:void(0)" onclick="filterCategory('情人節')" class="text-stone-500 hover:text-brand-600 px-1 py-2 transition">情人告白</a>
+                    <a href="javascript:void(0)" onclick="filterCategory('開幕')" class="text-stone-500 hover:text-brand-600 px-1 py-2 transition">祝賀開業</a>
+                </div>
+
+                <!-- 右側操作按鈕 -->
+                <div class="flex items-center space-x-4">
+                    <!-- 會員狀態區 -->
+                    <div id="user-nav-area" class="text-sm">
+                        <button onclick="openAuthModal('login')" class="text-stone-600 hover:text-brand-600 transition font-medium mr-2">登入</button>
+                        <button onclick="openAuthModal('register')" class="bg-brand-600 text-white hover:bg-brand-700 px-4 py-2 rounded-full text-xs font-medium transition shadow-sm">註冊帳號</button>
+                    </div>
+
+                    <!-- 購物車按鈕 -->
+                    <button onclick="toggleCart(true)" class="relative p-2.5 bg-stone-50 hover:bg-brand-50 rounded-full text-stone-700 hover:text-brand-600 transition duration-300">
+                        <i class="fa-solid fa-bag-shopping text-lg"></i>
+                        <span id="cart-badge" class="absolute -top-1 -right-1 bg-brand-600 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold hidden">0</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要內容區 -->
+    <main class="flex-grow">
+        
+        <!-- ================= 首頁與商品區 ================= -->
+        <div id="page-home" class="page-section">
+            <!-- 英雄看板 Hero Section -->
+            <div class="relative bg-stone-100 overflow-hidden py-16 lg:py-24 mb-12">
+                <div class="absolute inset-0 bg-cover bg-center mix-blend-multiply opacity-25" style="background-image: url('https://images.unsplash.com/photo-1526047932273-341f2a7631f9?auto=format&fit=crop&w=1200&q=80');"></div>
+                <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <span class="text-xs lg:text-sm font-semibold tracking-widest text-brand-700 uppercase block mb-3">Seasonal Flower Design</span>
+                    <h1 class="serif-font text-4xl sm:text-5xl lg:text-6xl font-normal text-stone-900 tracking-wide mb-6">
+                        用一束花，述說未完的故事
+                    </h1>
+                    <p class="max-w-xl mx-auto text-stone-600 text-sm sm:text-base leading-relaxed mb-8">
+                        精選在地與進口頂級花材，由專業花藝師手工定製。無論是佳節贈禮、開業祝賀、或日常浪漫，我們為您定格最美麗的瞬間。
+                    </p>
+                    <div class="flex justify-center space-x-4">
+                        <a href="#flower-list" class="bg-stone-900 hover:bg-stone-800 text-white text-sm font-medium px-8 py-3.5 rounded-full transition shadow-md">立即選購</a>
+                        <button onclick="showMockPDF('all-services')" class="bg-white/80 backdrop-blur hover:bg-white text-stone-800 border border-stone-200 text-sm font-medium px-8 py-3.5 rounded-full transition">下載花禮保養須知 (PDF)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 商品篩選與列表 -->
+            <div id="flower-list" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+                <!-- 分類標籤頁面 -->
+                <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 border-b border-stone-100 pb-5">
+                    <div>
+                        <h2 class="serif-font text-2xl lg:text-3xl text-stone-900 font-medium">花藝作品集</h2>
+                        <p class="text-stone-500 text-xs lg:text-sm mt-1">選購精美花束、盆花，預約您的美好日常</p>
+                    </div>
+                    <!-- 分類鈕 -->
+                    <div class="flex flex-wrap gap-2 mt-4 md:mt-0 overflow-x-auto no-scrollbar">
+                        <button onclick="filterCategory('all')" id="btn-cat-all" class="cat-btn px-4 py-2 text-xs font-medium rounded-full bg-stone-900 text-white transition">顯示全部</button>
+                        <button onclick="filterCategory('情人節')" id="btn-cat-情人節" class="cat-btn px-4 py-2 text-xs font-medium rounded-full bg-stone-100 text-stone-600 hover:bg-stone-200 transition">情人節限定</button>
+                        <button onclick="filterCategory('開幕')" id="btn-cat-開幕" class="cat-btn px-4 py-2 text-xs font-medium rounded-full bg-stone-100 text-stone-600 hover:bg-stone-200 transition">開幕祝賀</button>
+                        <button onclick="filterCategory('日常')" id="btn-cat-日常" class="cat-btn px-4 py-2 text-xs font-medium rounded-full bg-stone-100 text-stone-600 hover:bg-stone-200 transition">日常點綴</button>
+                    </div>
+                </div>
+
+                <!-- 商品網格 -->
+                <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                    <!-- 商品卡片會由 JavaScript 動態生成 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 結帳頁面 ================= -->
+        <div id="page-checkout" class="page-section hidden py-12 bg-stone-50">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <!-- 返回按鈕 -->
+                <button onclick="switchPage('home')" class="inline-flex items-center text-sm font-medium text-stone-600 hover:text-brand-600 mb-8 transition">
+                    <i class="fa-solid fa-arrow-left mr-2"></i> 返回商店購物
+                </button>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
+                    <div class="bg-brand-50 p-6 sm:p-8 border-b border-brand-100">
+                        <h2 class="serif-font text-2xl font-semibold text-brand-800">最後一步：確認您的訂購資訊</h2>
+                        <p class="text-brand-600 text-xs sm:text-sm mt-1">本站免線上金流，送出訂單後列印確認信，至實體花店現場付款領取即可。</p>
+                    </div>
+
+                    <div class="p-6 sm:p-8 space-y-8">
+                        <!-- 購物明細 -->
+                        <div>
+                            <h3 class="text-sm font-bold text-stone-900 tracking-wider uppercase mb-4">
+                                <i class="fa-solid fa-list-ol text-brand-600 mr-2"></i>您的購買清單
+                            </h3>
+                            <div id="checkout-items" class="divide-y divide-stone-100 bg-stone-50 rounded-xl px-4 py-2">
+                                <!-- 動態載入結帳商品 -->
+                            </div>
+                            <div class="flex justify-between items-center px-4 py-3 bg-brand-50/50 rounded-xl mt-3">
+                                <span class="font-bold text-stone-800">預估結算總金額</span>
+                                <span id="checkout-total" class="serif-font text-xl font-bold text-brand-700">NT$ 0</span>
+                            </div>
+                        </div>
+
+                        <!-- 訂購人資料 -->
+                        <div class="border-t border-stone-100 pt-6">
+                            <h3 class="text-sm font-bold text-stone-900 tracking-wider uppercase mb-4">
+                                <i class="fa-solid fa-user text-brand-600 mr-2"></i>填寫取貨人資訊
+                            </h3>
+                            <form id="checkout-form" onsubmit="handlePlaceOrder(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-stone-600 mb-1.5">取貨人姓名 *</label>
+                                    <input type="text" id="checkout-name" required class="w-full px-4 py-2.5 text-sm rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500 transition">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-stone-600 mb-1.5">聯絡電話 *</label>
+                                    <input type="tel" id="checkout-phone" required class="w-full px-4 py-2.5 text-sm rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500 transition">
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <label class="block text-xs font-semibold text-stone-600 mb-1.5">電子郵件 * (我們將以此發送購買證明)</label>
+                                    <input type="email" id="checkout-email" required class="w-full px-4 py-2.5 text-sm rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500 transition">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-stone-600 mb-1.5">預計現場付款取貨日期與大約時間 *</label>
+                                    <input type="datetime-local" id="checkout-time" required class="w-full px-4 py-2.5 text-sm rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500 transition">
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <label class="block text-xs font-semibold text-stone-600 mb-1.5">備註說明 (如：卡片內容、特殊包裝需求)</label>
+                                    <textarea id="checkout-notes" rows="3" class="w-full px-4 py-2.5 text-sm rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500 transition" placeholder="若需免費附贈小卡片，請在此留下祝福文字..."></textarea>
+                                </div>
+
+                                <div class="sm:col-span-2 bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-xl text-xs space-y-1 mt-2">
+                                    <p class="font-bold"><i class="fa-solid fa-circle-exclamation mr-1.5"></i>實體付款說明：</p>
+                                    <p>送出訂單後，系統會生成一份「取貨確認信」。請將該信件列印或截圖，並在指定的取貨時間前往實體花店現場付款領取即可。</p>
+                                </div>
+
+                                <div class="sm:col-span-2 pt-4">
+                                    <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-stone-900 font-bold py-3 px-6 rounded-xl transition duration-300 shadow-sm flex items-center justify-center">
+                                        <i class="fa-solid fa-circle-check mr-2"></i> 確認送出訂單，生成現場付款憑證
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 結帳成功與列印確認單 ================= -->
+        <div id="page-receipt" class="page-section hidden py-12 bg-stone-50">
+            <div class="max-w-2xl mx-auto px-4">
+                <div class="bg-white rounded-2xl shadow-md border border-stone-100 overflow-hidden">
+                    
+                    <!-- 列印區域開始 -->
+                    <div id="printArea" class="p-8 sm:p-10 space-y-6">
+                        <!-- 店頭 Header -->
+                        <div class="text-center pb-6 border-b border-dashed border-stone-200">
+                            <h2 class="serif-font text-3xl font-semibold tracking-wider text-brand-700">42燕婷有限公司</h2>
+                            <p class="text-xs text-stone-500 mt-1">實體付款與現場取貨確認單</p>
+                            <span class="inline-block bg-brand-100 text-brand-800 text-[11px] font-bold px-3 py-1 rounded-full mt-3 uppercase tracking-wider">等待現場付款 (Unpaid)</span>
+                        </div>
+
+                        <!-- 憑證條碼與資訊 -->
+                        <div class="grid grid-cols-2 gap-4 text-xs bg-stone-50 p-4 rounded-xl">
+                            <div>
+                                <span class="text-stone-400 block mb-0.5">訂單編號</span>
+                                <span id="receipt-id" class="font-bold text-stone-800">ORD-123456</span>
+                            </div>
+                            <div>
+                                <span class="text-stone-400 block mb-0.5">預計取貨時間</span>
+                                <span id="receipt-pickup-time" class="font-bold text-stone-800">2026-06-15 14:00</span>
+                            </div>
+                            <div>
+                                <span class="text-stone-400 block mb-0.5">訂購人</span>
+                                <span id="receipt-client" class="font-bold text-stone-800">王小明</span>
+                            </div>
+                            <div>
+                                <span class="text-stone-400 block mb-0.5">聯絡電話</span>
+                                <span id="receipt-phone" class="font-bold text-stone-800">0912-345-678</span>
+                            </div>
+                        </div>
+
+                        <!-- 細項明細 -->
+                        <div>
+                            <span class="text-xs font-bold text-stone-600 block mb-2">訂購花禮清單</span>
+                            <div id="receipt-items" class="divide-y divide-stone-100 text-sm">
+                                <!-- 動態載入明細 -->
+                            </div>
+                        </div>
+
+                        <!-- 費用統計 -->
+                        <div class="border-t border-stone-200 pt-4 flex justify-between items-center">
+                            <span class="text-sm font-bold text-stone-700">現場應付金額：</span>
+                            <span id="receipt-total" class="serif-font text-2xl font-bold text-brand-700">NT$ 0</span>
+                        </div>
+
+                        <!-- 付款提示說明 -->
+                        <div class="border-t border-stone-200 pt-4 text-xs text-stone-500 space-y-1">
+                            <p class="font-bold text-stone-700">取貨與付款地點說明：</p>
+                            <p>📍 實體店址：台中市北區花店路123號 (42燕婷有限公司 概念店)</p>
+                            <p>📞 聯絡電話：(04) 2345-6789</p>
+                            <p class="text-brand-600 font-medium">💡 請攜帶此單據（手機出示或列印皆可），至現場櫃檯完成付款與取貨。</p>
+                        </div>
+                    </div>
+                    <!-- 列印區域結束 -->
+
+                    <!-- 操作按鈕區 -->
+                    <div class="bg-stone-50 px-8 py-5 border-t border-stone-100 flex flex-col sm:flex-row gap-3 justify-between no-print">
+                        <button onclick="switchPage('home')" class="text-stone-600 hover:text-stone-800 text-sm font-medium py-2 px-4 rounded-lg border border-stone-200 bg-white transition text-center">
+                            返回首頁
+                        </button>
+                        <div class="flex gap-2">
+                            <button onclick="window.print()" class="bg-brand-600 hover:bg-brand-700 text-stone-900 text-sm font-bold py-2.5 px-5 rounded-lg transition flex items-center justify-center">
+                                <i class="fa-solid fa-print mr-2"></i> 列印實體確認單
+                            </button>
+                            <button onclick="simulateEmailSend()" class="bg-brand-600 hover:bg-brand-700 text-stone-900 text-sm font-bold py-2.5 px-5 rounded-lg transition flex items-center justify-center">
+                                <i class="fa-solid fa-envelope mr-2"></i> 發送Email備份
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 管理員後端 (Admin Panel Page) ================= -->
+        <div id="page-admin" class="page-section hidden py-8 bg-stone-50 min-h-screen no-print">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <!-- 後台 Header -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 pb-5 border-b border-stone-200">
+                    <div>
+                        <h2 class="serif-font text-3xl font-semibold text-stone-950 flex items-center">
+                            <i class="fa-solid fa-gauge-high mr-3 text-brand-600"></i> 後台管理系統 (Admin Panel)
+                        </h2>
+                        <p class="text-stone-500 text-xs sm:text-sm mt-1">管理商品上架、會員名單、店面訂單與手作自定義維護</p>
+                    </div>
+                    <div class="mt-4 md:mt-0 flex gap-2">
+                        <button onclick="switchPage('home')" class="text-stone-600 bg-white border border-stone-200 hover:bg-stone-50 px-4 py-2 rounded-xl text-xs font-semibold transition">
+                            <i class="fa-solid fa-store mr-1.5"></i> 返回前台商店
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <!-- 左側主選單 Tabs -->
+                    <div class="lg:col-span-3 flex flex-col gap-2">
+                        <button onclick="switchAdminTab('dashboard')" id="btn-admin-tab-dashboard" class="admin-tab-btn flex items-center space-x-3 px-5 py-3.5 rounded-xl text-left text-sm font-medium transition duration-200 bg-brand-600 text-stone-900 shadow-sm">
+                            <i class="fa-solid fa-chart-pie w-5"></i> <span>數據與經營總覽</span>
+                        </button>
+                        <button onclick="switchAdminTab('products')" id="btn-admin-tab-products" class="admin-tab-btn flex items-center space-x-3 px-5 py-3.5 rounded-xl text-left text-sm font-medium transition duration-200 bg-white text-stone-600 hover:bg-stone-100">
+                            <i class="fa-solid fa-spa w-5"></i> <span>商品自定義與上架</span>
+                        </button>
+                        <button onclick="switchAdminTab('members')" id="btn-admin-tab-members" class="admin-tab-btn flex items-center space-x-3 px-5 py-3.5 rounded-xl text-left text-sm font-medium transition duration-200 bg-white text-stone-600 hover:bg-stone-100">
+                            <i class="fa-solid fa-users w-5"></i> <span>註冊會員管理</span>
+                        </button>
+                        <button onclick="switchAdminTab('orders')" id="btn-admin-tab-orders" class="admin-tab-btn flex items-center space-x-3 px-5 py-3.5 rounded-xl text-left text-sm font-medium transition duration-200 bg-white text-stone-600 hover:bg-stone-100">
+                            <i class="fa-solid fa-receipt w-5"></i> <span>現場訂單與結算</span>
+                        </button>
+                    </div>
+
+                    <!-- 右側主要內容區塊 -->
+                    <div class="lg:col-span-9 space-y-6">
+                        
+                        <!-- (1) 數據總覽儀表板 -->
+                        <div id="admin-sub-dashboard" class="admin-sub-section space-y-6">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div class="bg-white p-6 rounded-2xl border border-stone-100 shadow-xs">
+                                    <span class="text-xs font-semibold text-stone-400 block mb-1">今日店面營業額</span>
+                                    <span id="stat-revenue" class="serif-font text-2xl font-bold text-stone-900">NT$ 0</span>
+                                </div>
+                                <div class="bg-white p-6 rounded-2xl border border-stone-100 shadow-xs">
+                                    <span class="text-xs font-semibold text-stone-400 block mb-1">總預約訂單</span>
+                                    <span id="stat-orders-count" class="serif-font text-2xl font-bold text-stone-900">0 筆</span>
+                                </div>
+                                <div class="bg-white p-6 rounded-2xl border border-stone-100 shadow-xs">
+                                    <span class="text-xs font-semibold text-stone-400 block mb-1">註冊會員數</span>
+                                    <span id="stat-users-count" class="serif-font text-2xl font-bold text-stone-900">0 人</span>
+                                </div>
+                                <div class="bg-white p-6 rounded-2xl border border-stone-100 shadow-xs">
+                                    <span class="text-xs font-semibold text-stone-400 block mb-1">上架商品數量</span>
+                                    <span id="stat-products-count" class="serif-font text-2xl font-bold text-stone-900">0 件</span>
+                                </div>
+                            </div>
+
+                            <!-- 後台運作指南 -->
+                            <div class="bg-brand-50 border border-brand-100 p-6 rounded-2xl space-y-3">
+                                <h3 class="font-bold text-brand-800 text-sm flex items-center">
+                                    <i class="fa-solid fa-lightbulb mr-2"></i> 管理員後端運作提示
+                                </h3>
+                                <p class="text-xs text-brand-700 leading-relaxed">
+                                    此後台系統已與使用者前端之商品展示、會員登入和下單結帳完全綁定。您在此處進行的新增與修改，前台將立即對應變更！所有資料均儲存在本地擬真資料庫中，即使重整網頁也依然存在。
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- (2) 商品與自定義維護 -->
+                        <div id="admin-sub-products" class="admin-sub-section hidden space-y-4">
+                            <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-stone-100">
+                                <span class="text-xs font-bold text-stone-600">商品庫存管理</span>
+                                <button onclick="openAdminProductModal(null)" class="bg-brand-600 hover:bg-brand-700 text-stone-900 text-xs font-bold px-4 py-2 rounded-lg transition flex items-center">
+                                    <i class="fa-solid fa-plus mr-1.5"></i> 新增花藝商品/行程
+                                </button>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-stone-100 overflow-hidden shadow-xs">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse text-xs">
+                                        <thead>
+                                            <tr class="bg-stone-50 border-b border-stone-100 text-stone-400 font-bold uppercase">
+                                                <th class="p-4">商品圖片</th>
+                                                <th class="p-4">名稱 & 類別</th>
+                                                <th class="p-4">單價</th>
+                                                <th class="p-4">庫存</th>
+                                                <th class="p-4">主要花材與場合</th>
+                                                <th class="p-4 text-center">操作項目</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="admin-products-table" class="divide-y divide-stone-100 text-stone-700">
+                                            <!-- 動態載入商品行 -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- (3) 會員名單管理 -->
+                        <div id="admin-sub-members" class="admin-sub-section hidden space-y-4">
+                            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 bg-white p-4 rounded-xl border border-stone-100">
+                                <div class="relative flex-1">
+                                    <i class="fa-solid fa-magnifying-glass text-stone-400 absolute left-3 top-3 text-xs"></i>
+                                    <input type="text" id="admin-member-search" oninput="renderAdminMembers()" class="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500" placeholder="搜尋會員姓名、Email、電話...">
+                                </div>
+                                <button onclick="openAdminMemberModal(null)" class="bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold px-4 py-2 rounded-lg transition self-start sm:self-auto flex items-center">
+                                    <i class="fa-solid fa-user-plus mr-1.5"></i> 新增會員帳號
+                                </button>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-stone-100 overflow-hidden shadow-xs">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse text-xs">
+                                        <thead>
+                                            <tr class="bg-stone-50 border-b border-stone-100 text-stone-400 font-bold">
+                                                <th class="p-4">真實姓名</th>
+                                                <th class="p-4">登入 Email</th>
+                                                <th class="p-4">聯絡電話</th>
+                                                <th class="p-4">角色</th>
+                                                <th class="p-4 text-center">操作項目</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="admin-members-table" class="divide-y divide-stone-100 text-stone-700">
+                                            <!-- 動態載入會員行 -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- (4) 訂單與結算管理 -->
+                        <div id="admin-sub-orders" class="admin-sub-section hidden space-y-4">
+                            <div class="bg-white p-4 rounded-xl border border-stone-100 flex justify-between items-center">
+                                <span class="text-xs font-bold text-stone-600">全站實體取貨訂單明細</span>
+                                <span class="text-[10px] text-stone-400">點擊付款狀態即可直接進行手作付款核銷變更</span>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-stone-100 overflow-hidden shadow-xs">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse text-xs">
+                                        <thead>
+                                            <tr class="bg-stone-50 border-b border-stone-100 text-stone-400 font-bold">
+                                                <th class="p-4">訂單編號</th>
+                                                <th class="p-4">取貨人 / 電話</th>
+                                                <th class="p-4">預約取貨時間</th>
+                                                <th class="p-4">費用小計</th>
+                                                <th class="p-4 text-center">付款狀態</th>
+                                                <th class="p-4 text-center">操作項目</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="admin-orders-table" class="divide-y divide-stone-100 text-stone-700">
+                                            <!-- 動態載入訂單行 -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 頁尾 Footer -->
+    <footer class="bg-stone-900 text-stone-400 py-12 border-t border-stone-800 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:text-left">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
+                <div>
+                    <h4 class="serif-font text-lg text-white font-medium tracking-wider mb-4">42燕婷有限公司</h4>
+                    <p class="text-xs leading-relaxed max-w-xs mx-auto sm:mx-0">
+                        美學是生活的調味。我們以精湛的花藝美學，將大自然的神奇餽贈，化為溫暖您與他人的花禮。
+                    </p>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-white tracking-widest uppercase mb-4">營業資訊</h4>
+                    <p class="text-xs space-y-1">
+                        <span>營業時間：週一至週日 10:00 - 20:00</span><br>
+                        <span>店面地址：台中市北區花店路123號</span><br>
+                        <span>聯絡電話：(04) 2345-6789</span>
+                    </p>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-white tracking-widest uppercase mb-4">購物提示</h4>
+                    <p class="text-xs leading-relaxed">
+                        線上選購，現場付款取貨。如需客製化大體積花禮或婚禮布置規劃，歡迎直接來電或來店洽談。
+                    </p>
+                </div>
+            </div>
+            <div class="border-t border-stone-800 pt-6 text-center text-[11px] text-stone-600 flex flex-col sm:flex-row justify-between items-center">
+                <span>© 2026 42燕婷有限公司. All Rights Reserved.</span>
+                <span class="mt-2 sm:mt-0">體驗版網頁 - 由 Gemini Canvas 與 Vibe Coding 完美設計</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ================= 購物車滑動側邊欄 (Cart Drawer) (z-index 提高至 10000) ================= -->
+    <div id="cart-drawer" class="fixed inset-0 z-[10000] overflow-hidden hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
+        <div class="absolute inset-0 overflow-hidden">
+            <!-- 背景遮罩 -->
+            <div onclick="toggleCart(false)" class="absolute inset-0 bg-stone-900/40 backdrop-blur-xs transition-opacity" aria-hidden="true"></div>
+
+            <div class="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
+                <div class="pointer-events-auto w-screen max-w-md">
+                    <div class="flex h-full flex-col overflow-y-scroll bg-white shadow-xl">
+                        <div class="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
+                            <div class="flex items-start justify-between border-b border-stone-100 pb-5">
+                                <h2 class="serif-font text-lg font-medium text-stone-900" id="slide-over-title">購物籃</h2>
+                                <div class="ml-3 h-7 flex items-center">
+                                    <button type="button" onclick="toggleCart(false)" class="relative -m-2 p-2 text-stone-400 hover:text-stone-500">
+                                        <span class="sr-only">Close panel</span>
+                                        <i class="fa-solid fa-xmark text-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="mt-8">
+                                <div class="flow-root">
+                                    <ul id="cart-items-list" role="list" class="-my-6 divide-y divide-stone-100">
+                                        <!-- 動態加載購物車項目 -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-stone-100 px-4 py-6 sm:px-6 bg-stone-50">
+                            <div class="flex justify-between text-base font-medium text-stone-900 mb-2">
+                                <p>小計</p>
+                                <p id="cart-subtotal">NT$ 0</p>
+                            </div>
+                            <p class="text-xs text-stone-500 mb-6">現場取貨付款，不需在此輸入信用卡號。</p>
+                            <div class="space-y-3">
+                                <button onclick="goToCheckout()" class="w-full bg-brand-600 hover:bg-brand-700 text-stone-900 font-bold py-3 rounded-xl transition duration-300 flex items-center justify-center">
+                                    前往確認現場取貨單 <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                                </button>
+                                <button onclick="toggleCart(false)" class="w-full bg-white hover:bg-stone-100 text-stone-700 border border-stone-200 font-medium py-3 rounded-xl transition">
+                                    繼續逛逛
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 商品詳細資訊彈窗 (Product Detail Modal) (z-index 提高至 10000) ================= -->
+    <div id="product-modal" class="fixed inset-0 z-[10000] overflow-y-auto hidden" role="dialog" aria-modal="true">
+        <div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+            <!-- 遮罩 -->
+            <div onclick="closeProductModal()" class="fixed inset-0 bg-stone-900/50 backdrop-blur-xs transition-opacity" aria-hidden="true"></div>
+
+            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+                <!-- 關閉按鈕 -->
+                <button onclick="closeProductModal()" class="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-xs hover:bg-white text-stone-700 p-2 rounded-full shadow-sm transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2">
+                    <!-- 左：商品圖 -->
+                    <div class="relative h-64 sm:h-full min-h-[300px]">
+                        <img id="modal-img" src="" alt="商品圖片" class="absolute inset-0 w-full h-full object-cover">
+                        <span id="modal-tag" class="absolute top-4 left-4 bg-brand-600 text-stone-900 text-[10px] uppercase font-bold px-3 py-1 rounded-full"></span>
+                    </div>
+
+                    <!-- 右：詳細內容 -->
+                    <div class="p-6 sm:p-8 flex flex-col justify-between">
+                        <div>
+                            <h3 id="modal-name" class="serif-font text-2xl font-semibold text-stone-900 mb-1"></h3>
+                            <p id="modal-price" class="serif-font text-lg font-bold text-brand-600 mb-4"></p>
+                            
+                            <p id="modal-desc" class="text-stone-500 text-xs sm:text-sm leading-relaxed mb-6"></p>
+
+                            <!-- 詳細規格 -->
+                            <div class="border-t border-b border-stone-100 py-4 mb-6 space-y-2 text-xs text-stone-600">
+                                <div class="flex"><span class="w-20 font-bold">主要花材：</span><span id="modal-materials"></span></div>
+                                <div class="flex"><span class="w-20 font-bold">包裝方式：</span><span id="modal-packaging"></span></div>
+                                <div class="flex"><span class="w-20 font-bold">適用場合：</span><span id="modal-occasion"></span></div>
+                                <div class="flex"><span class="w-20 font-bold">剩餘庫存：</span><span id="modal-stock" class="text-brand-600 font-semibold"></span></div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2.5">
+                            <button onclick="addCurrentToCart()" class="w-full bg-brand-600 hover:bg-brand-700 text-stone-900 font-bold py-3 rounded-xl transition flex items-center justify-center">
+                                <i class="fa-solid fa-cart-plus mr-2"></i> 加入購物籃
+                            </button>
+                            <!-- 支援下載詳細行程與保養 PDF -->
+                            <button id="modal-pdf-btn" class="w-full bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200 text-xs font-medium py-2.5 rounded-xl transition flex items-center justify-center">
+                                <i class="fa-solid fa-file-pdf text-red-500 mr-2"></i> 下載詳細照顧指南 (PDF)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 登入註冊彈窗 (Auth Modal) (z-index 提高至 10000) ================= -->
+    <div id="auth-modal" class="fixed inset-0 z-[10000] overflow-y-auto hidden" role="dialog" aria-modal="true">
+        <div class="flex min-h-screen items-center justify-center p-4 text-center">
+            <!-- 遮罩 -->
+            <div onclick="closeAuthModal()" class="fixed inset-0 bg-stone-900/50 backdrop-blur-xs transition-opacity" aria-hidden="true"></div>
+
+            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all w-full max-w-md p-6 sm:p-8">
+                <!-- 關閉按鈕 -->
+                <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-500">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+
+                <!-- 彈窗頁籤 -->
+                <div class="flex border-b border-stone-100 pb-4 mb-6">
+                    <button id="tab-login" onclick="switchAuthTab('login')" class="flex-1 text-center font-bold text-sm text-brand-600 border-b-2 border-brand-600 pb-2">帳號登入</button>
+                    <button id="tab-register" onclick="switchAuthTab('register')" class="flex-1 text-center font-bold text-sm text-stone-400 pb-2">新用戶註冊</button>
+                </div>
+
+                <!-- 登入表單 -->
+                <form id="form-login" onsubmit="handleAuthSubmit(event, 'login')" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-stone-600 mb-1">您的電子郵件 / 帳號</label>
+                        <input type="email" required id="login-email" class="w-full px-4 py-2.5 text-sm rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500" placeholder="example@email.com">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-stone-600 mb-1">安全密碼</label>
+                        <input type="password" required id="login-pw" class="w-full px-4 py-2.5 text-sm rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500" placeholder="請輸入密碼">
+                    </div>
+                    <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-stone-900 font-bold py-3 rounded-lg transition text-sm">
+                        安全登入
+                    </button>
+                    <p class="text-center text-xs text-stone-400 mt-2">提示：測試帳號 guest@test.com / 123456<br>管理員帳號 admin@test.com / admin123</p>
+                </form>
+
+                <!-- 註冊表單 -->
+                <form id="form-register" onsubmit="handleAuthSubmit(event, 'register')" class="space-y-4 hidden">
+                    <div>
+                        <label class="block text-xs font-semibold text-stone-600 mb-1">完整姓名 *</label>
+                        <input type="text" required id="reg-name" class="w-full px-4 py-2.5 text-sm rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500" placeholder="例如：王小明">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-stone-600 mb-1">電子郵件 * (立即開通)</label>
+                        <input type="email" required id="reg-email" class="w-full px-4 py-2.5 text-sm rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500" placeholder="example@email.com">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-stone-600 mb-1">行動電話 *</label>
+                        <input type="tel" required id="reg-phone" class="w-full px-4 py-2.5 text-sm rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500" placeholder="例如：0912345678">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-stone-600 mb-1">設定安全密碼 *</label>
+                        <input type="password" required id="reg-pw" class="w-full px-4 py-2.5 text-sm rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500" placeholder="至少 6 位字元">
+                    </div>
+                    <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-stone-900 font-bold py-3 rounded-lg transition text-sm">
+                        立即開通並自動登入
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 彈窗：新增與編輯商品 (Admin Product Edit Modal) (z-index 提高至 10000) ================= -->
+    <div id="admin-product-modal" class="fixed inset-0 z-[10000] overflow-y-auto hidden" role="dialog" aria-modal="true">
+        <div class="flex min-h-screen items-center justify-center p-4">
+            <div onclick="closeAdminProductModal()" class="fixed inset-0 bg-stone-900/50 backdrop-blur-xs transition-opacity"></div>
+            <div class="relative transform overflow-hidden rounded-2xl bg-white shadow-xl transition-all w-full max-w-lg p-6 sm:p-8">
+                <button onclick="closeAdminProductModal()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <h3 id="admin-product-modal-title" class="serif-font text-xl font-bold text-stone-900 mb-6">新增/編輯花藝商品</h3>
+                
+                <form id="admin-product-form" onsubmit="handleAdminProductSave(event)" class="space-y-4 text-xs sm:text-sm">
+                    <input type="hidden" id="admin-prod-id">
+                    <div>
+                        <label class="block font-semibold text-stone-700 mb-1">商品名稱 *</label>
+                        <input type="text" id="admin-prod-name" required class="w-full px-3 py-2 rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block font-semibold text-stone-700 mb-1">單價 (NT$) *</label>
+                            <input type="number" id="admin-prod-price" required class="w-full px-3 py-2 rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-stone-700 mb-1">庫存數量 *</label>
+                            <input type="number" id="admin-prod-stock" required class="w-full px-3 py-2 rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block font-semibold text-stone-700 mb-1">分類 *</label>
+                            <select id="admin-prod-category" class="w-full px-3 py-2 rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500 bg-white">
+                                <option value="情人節">情人節</option>
+                                <option value="開幕">開幕</option>
+                                <option value="日常">日常</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-stone-700 mb-1">適用場合</label>
+                            <input type="text" id="admin-prod-occasion" class="w-full px-3 py-2 rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500" placeholder="例如：情人告白、開業祝賀">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-stone-700 mb-1">主要花材 *</label>
+                        <input type="text" id="admin-prod-materials" required class="w-full px-3 py-2 rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500" placeholder="例如：戴安娜玫瑰、尤加利葉">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-stone-700 mb-1">包裝方式</label>
+                        <input type="text" id="admin-prod-packaging" class="w-full px-3 py-2 rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500" placeholder="例如：韓式多層次包裝紙">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-stone-700 mb-1">商品描述</label>
+                        <textarea id="admin-prod-desc" rows="2" class="w-full px-3 py-2 rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-stone-700 mb-1">商品圖片網址 (可填空使用隨機 Unsplash 圖)</label>
+                        <input type="text" id="admin-prod-image" class="w-full px-3 py-2 rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500" placeholder="https://images.unsplash.com/...">
+                        <!-- 模擬上傳區塊 -->
+                        <div class="flex gap-2 mt-2">
+                            <button type="button" onclick="simulateFileUpload('image')" class="bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs py-1.5 px-3 rounded-lg transition">
+                                <i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> 模擬上傳實體圖片 (JPG/PNG)
+                            </button>
+                            <button type="button" onclick="simulateFileUpload('pdf')" class="bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs py-1.5 px-3 rounded-lg transition">
+                                <i class="fa-solid fa-file-pdf mr-1.5"></i> 模擬維護上傳行程 PDF 檔
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-stone-900 font-bold py-3 rounded-lg transition text-xs sm:text-sm">
+                        儲存商品設定
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 彈窗：新增與編輯會員 (Admin Member Edit Modal) (z-index 提高至 10000) ================= -->
+    <div id="admin-member-modal" class="fixed inset-0 z-[10000] overflow-y-auto hidden" role="dialog" aria-modal="true">
+        <div class="flex min-h-screen items-center justify-center p-4">
+            <div onclick="closeAdminMemberModal()" class="fixed inset-0 bg-stone-900/50 backdrop-blur-xs transition-opacity"></div>
+            <div class="relative transform overflow-hidden rounded-2xl bg-white shadow-xl transition-all w-full max-w-md p-6 sm:p-8">
+                <button onclick="closeAdminMemberModal()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <h3 id="admin-member-modal-title" class="serif-font text-xl font-bold text-stone-900 mb-6">新增/編輯會員帳號</h3>
+                
+                <form id="admin-member-form" onsubmit="handleAdminMemberSave(event)" class="space-y-4 text-xs sm:text-sm">
+                    <input type="hidden" id="admin-mem-id">
+                    <div>
+                        <label class="block font-semibold text-stone-700 mb-1">真實姓名 *</label>
+                        <input type="text" id="admin-mem-name" required class="w-full px-3 py-2 rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-stone-700 mb-1">電子郵件 (登入帳號) *</label>
+                        <input type="email" id="admin-mem-email" required class="w-full px-3 py-2 rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-stone-700 mb-1">聯絡電話 *</label>
+                        <input type="tel" id="admin-mem-phone" required class="w-full px-3 py-2 rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-stone-700 mb-1">帳號權限角色 *</label>
+                        <select id="admin-mem-role" class="w-full px-3 py-2 rounded-lg border border-stone-200 focus:outline-none focus:border-brand-500 bg-white">
+                            <option value="user">一般會員 (user)</option>
+                            <option value="admin">管理員 (admin)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="w-full bg-stone-900 hover:bg-stone-800 text-white font-medium py-3 rounded-lg transition text-xs sm:text-sm">
+                        儲存會員資料
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 彈窗：通用自訂確認提示框 (Confirm Modal) (z-index 提高至 11000) ================= -->
+    <div id="confirm-modal" class="fixed inset-0 z-[11000] overflow-y-auto hidden" role="dialog" aria-modal="true">
+        <div class="flex min-h-screen items-center justify-center p-4 text-center">
+            <div onclick="closeConfirmModal()" class="fixed inset-0 bg-stone-900/50 backdrop-blur-xs transition-opacity" aria-hidden="true"></div>
+            <div class="relative transform overflow-hidden rounded-2xl bg-white shadow-xl transition-all w-full max-w-sm p-6 text-center space-y-4">
+                <div class="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto text-xl">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h3 class="text-base font-bold text-stone-900">確認執行此操作？</h3>
+                <p id="confirm-message" class="text-xs text-stone-500 leading-relaxed"></p>
+                <div class="flex gap-3 pt-2">
+                    <button onclick="closeConfirmModal()" class="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold py-2.5 rounded-lg transition">取消</button>
+                    <button id="confirm-submit-btn" class="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-2.5 rounded-lg transition">確認刪除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 通知訊息彈窗 (Notification Banner) (z-index 提高至 10500) ================= -->
+    <div id="toast" class="fixed bottom-5 right-5 z-[10500] transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-stone-900 text-white px-5 py-3.5 rounded-xl shadow-lg flex items-center space-x-3 text-xs sm:text-sm">
+            <span id="toast-icon" class="text-brand-400 text-lg"></span>
+            <span id="toast-msg" class="font-medium"></span>
+        </div>
+    </div>
+
+    <!-- ================= 開發人員快速切換按鈕 (Developer Switcher) (僅在前台顯示，方便切換調試) ================= -->
+    <div class="fixed bottom-5 left-5 z-[9999] no-print">
+        <button onclick="toggleQuickAdminView()" class="bg-brand-600 hover:bg-brand-700 text-stone-900 text-xs font-bold px-4 py-3 rounded-full shadow-lg flex items-center space-x-2 transition duration-300">
+            <i class="fa-solid fa-shuffle"></i>
+            <span>切換前台 / 後台門戶</span>
+        </button>
+    </div>
+
+    <!-- ================= JavaScript 資料處理與互動邏輯 ================= -->
+    <script>
+        // 預設擬真商品資料
+        const DEFAULT_PRODUCTS = [
+            {
+                id: 1,
+                name: '初戀告白 - 粉嫩戴安娜玫瑰花束',
+                price: 1880,
+                stock: 5,
+                description: '進口粉玫瑰「戴安娜」象徵初戀的羞澀與真心。搭配飽滿蓬鬆的尤加利葉，創造豐滿浪漫的視覺享受。非常適合週年紀念、告白驚喜。',
+                materials: '戴安娜粉玫瑰 19 朵、尤加利葉、乒乓菊',
+                packaging: '霧面高質感雙色霧面包裝紙、優雅緞帶緞帶手綁',
+                category: '情人節',
+                image_url: 'https://images.unsplash.com/photo-1561181286-d3fee7d55364?auto=format&fit=crop&w=600&q=80',
+                pdf_name: 'Dianna_Rose_Care.pdf'
+            },
+            {
+                id: 2,
+                name: '富麗堂皇 - 開幕祝賀金金盆花',
+                price: 3600,
+                stock: 3,
+                description: '選用具有東方富貴象徵的進口大紅掌、洋桔梗，點綴亮金噴漆尤加利與金葉，搭配簡約啞光水泥盆，展現大器、精緻卻不落俗套的現代開幕祝福。',
+                materials: '紅掌 5 朵、粉桔梗、金色尤加利葉、天堂鳥葉',
+                packaging: '中大型質感仿舊啞光水泥盆、開業紅緞帶飾牌',
+                category: '開幕',
+                image_url: 'https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?auto=format&fit=crop&w=600&q=80',
+                pdf_name: 'Grand_Opening_Flower_Care.pdf'
+            },
+            {
+                id: 3,
+                name: '日系小清新 - 恬靜洋甘菊日常盆栽',
+                price: 880,
+                stock: 12,
+                description: '充滿野趣的小洋甘菊盆花，搭配自然風牛皮紙盆套，像把北歐原野的清新陽光直接帶進書房。給自己疲憊生活的一抹療癒。',
+                materials: '荷蘭洋甘菊、小白菊、翠珠花',
+                packaging: '原木底座、環保天然牛皮紙套盆、棉麻細線',
+                category: '日常',
+                image_url: 'https://images.unsplash.com/photo-1533616688419-b7a585564566?auto=format&fit=crop&w=600&q=80',
+                pdf_name: 'Chamomile_Care_Tips.pdf'
+            },
+            {
+                id: 4,
+                name: '摯愛誓言 - 純白百合高雅手捧花',
+                price: 2200,
+                stock: 4,
+                description: '香氣宜人、端裝大氣的進口白百合，搭配輕柔的蕾絲花。完美傳達執子之手、與子偕老的堅定誓約。適合婚慶或感謝母親。',
+                materials: '香水白百合 7 支、純白洋桔梗、蕾絲花',
+                packaging: '極簡珍珠白壓紋紙、雪紡透光緞帶手紮',
+                category: '情人節',
+                image_url: 'https://images.unsplash.com/photo-1596436889106-be35e843f974?auto=format&fit=crop&w=600&q=80',
+                pdf_name: 'White_Lily_Elegance.pdf'
+            },
+            {
+                id: 5,
+                name: '春之氣息 - 黃金雨向日葵陽光花束',
+                price: 1200,
+                stock: 8,
+                description: '象徵充滿朝氣與夢想的向日葵。黃橙橙的陽光氣息，最適合用來為好友加油打氣、祝福畢業，或者點亮新辦公桌的生機。',
+                materials: '巨型進口向日葵 3 朵、滿天星、微幅草',
+                packaging: '牛皮紙多層次包裹、麻繩蝴蝶結自然感',
+                category: '日常',
+                image_url: 'https://images.unsplash.com/photo-1597848212624-a19eb35e2651?auto=format&fit=crop&w=600&q=80',
+                pdf_name: 'Sunflower_Sunlight.pdf'
+            },
+            {
+                id: 6,
+                name: '前程似錦 - 玫瑰桔梗混搭藝術桌花',
+                price: 4200,
+                stock: 2,
+                description: '集結紅、粉、紫、綠多色系的高階花藝盆栽，利用極富線條感與空間感的插花技巧，為新店鋪、大廳玄關打造尊貴高雅的第一印象。',
+                materials: '藝術級配材、玫瑰與桔梗混合',
+                packaging: '磨砂古典黑花盆',
+                category: '開幕',
+                image_url: 'https://images.unsplash.com/photo-1527061011665-3652c757a4d4?auto=format&fit=crop&w=600&q=80',
+                pdf_name: 'Art_Opening_Vase.pdf'
+            }
+        ];
+
+        // 預設擬真註冊會員
+        const DEFAULT_USERS = [
+            { id: 101, name: '王小明', email: 'guest@test.com', phone: '0912-345-678', role: 'user' },
+            { id: 102, name: '陳經理 (Admin)', email: 'admin@test.com', phone: '0988-888-888', role: 'admin' },
+            { id: 103, name: '林雅婷', email: 'yating@test.com', phone: '0922-111-222', role: 'user' }
+        ];
+
+        // 預設擬真訂單 (實體店面結算模式)
+        const DEFAULT_ORDERS = [
+            { id: 'ORD-849502', clientName: '王小明', phone: '0912-345-678', pickupTime: '2026-06-28 14:00', totalPrice: 3080, status: 'unpaid', items: '日系小清新日常盆栽 x1, 春之氣息向日葵花束 x1' },
+            { id: 'ORD-774023', clientName: '林雅婷', phone: '0922-111-222', pickupTime: '2026-06-29 18:30', totalPrice: 1880, status: 'paid', items: '初戀告白戴安娜玫瑰花束 x1' }
+        ];
+
+        // 應用程式狀態管理 App State
+        let currentUser = null;
+        let cart = [];
+        let activeProduct = null;
+        let activeCategory = 'all';
+        let activeAdminTab = 'dashboard';
+
+        // 動態本地資料庫物件
+        let MOCK_PRODUCTS = [];
+        let usersDb = [];
+        let ordersDb = [];
+
+        // --- 全安全儲存系統（針對 file:/// 完美降級，絕不阻斷報錯） ---
+        const SafeStorage = {
+            _tempStorage: {},
+            getItem: function(key) {
+                try {
+                    if (typeof window !== 'undefined' && 'localStorage' in window && window.localStorage !== null) {
+                        return window.localStorage.getItem(key);
+                    }
+                } catch (e) {
+                    console.warn("[安全模式] 無法存取瀏覽器本地儲存，已安全切換至記憶體。");
+                }
+                return this._tempStorage[key] || null;
+            },
+            setItem: function(key, value) {
+                try {
+                    if (typeof window !== 'undefined' && 'localStorage' in window && window.localStorage !== null) {
+                        window.localStorage.setItem(key, value);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn("[安全模式] 無法寫入本地儲存，將保留於當前視窗會話。");
+                }
+                this._tempStorage[key] = String(value);
+            },
+            removeItem: function(key) {
+                try {
+                    if (typeof window !== 'undefined' && 'localStorage' in window && window.localStorage !== null) {
+                        window.localStorage.removeItem(key);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn("[安全模式] 無法刪除本地儲存紀錄。");
+                }
+                delete this._tempStorage[key];
+            }
+        };
+
+        // 頁面切換機制
+        function switchPage(pageId) {
+            document.querySelectorAll('.page-section').forEach(page => {
+                page.classList.add('hidden');
+            });
+            const targetPage = document.getElementById(`page-${pageId}`);
+            if (targetPage) {
+                targetPage.classList.remove('hidden');
+            }
+            
+            // 每次切回首頁即重新渲染商品
+            if (pageId === 'home') {
+                renderProducts();
+            } else if (pageId === 'admin') {
+                renderAdminDashboard();
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ================= 商品渲染與篩選 (前端) =================
+        function renderProducts() {
+            const grid = document.getElementById('products-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            const filtered = activeCategory === 'all' 
+                ? MOCK_PRODUCTS 
+                : MOCK_PRODUCTS.filter(p => p.category === activeCategory);
+
+            filtered.forEach(p => {
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-2xl border border-stone-100 overflow-hidden shadow-xs hover:shadow-md transition duration-300 flex flex-col group";
+                card.innerHTML = `
+                    <div class="relative overflow-hidden aspect-[4/3] bg-stone-100 cursor-pointer" onclick="openProductModal(${p.id})">
+                        <img src="${p.image_url}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.src='https://images.unsplash.com/photo-1526047932273-341f2a7631f9?auto=format&fit=crop&w=400&q=80'">
+                        <span class="absolute top-3 left-3 bg-white/90 backdrop-blur text-brand-700 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-xs">${p.category}</span>
+                    </div>
+                    <div class="p-5 flex-grow flex flex-col justify-between">
+                        <div class="cursor-pointer" onclick="openProductModal(${p.id})">
+                            <h3 class="font-medium text-stone-900 group-hover:text-brand-600 transition text-sm sm:text-base line-clamp-1 mb-1">${p.name}</h3>
+                            <p class="text-stone-400 text-xs line-clamp-2 mb-3 font-light">${p.description}</p>
+                        </div>
+                        <div>
+                            <div class="flex items-baseline space-x-1.5 mb-4">
+                                <span class="serif-font text-base font-bold text-brand-600">NT$ ${p.price.toLocaleString()}</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="addToCart(${p.id}, 1)" class="flex-grow bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold py-2.5 rounded-xl transition duration-300">
+                                    加入購物
+                                </button>
+                                <button onclick="openProductModal(${p.id})" class="bg-stone-50 hover:bg-stone-100 text-stone-600 p-2.5 rounded-xl transition" title="查看詳情">
+                                    <i class="fa-solid fa-eye text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterCategory(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.className = "cat-btn px-4 py-2 text-xs font-medium rounded-full bg-stone-100 text-stone-600 hover:bg-stone-200 transition";
+            });
+            const activeBtn = document.getElementById(`btn-cat-${cat}`);
+            if (activeBtn) {
+                activeBtn.className = "cat-btn px-4 py-2 text-xs font-medium rounded-full bg-stone-900 text-white transition";
+            }
+            renderProducts();
+            
+            // 若不在首頁，自動切回首頁
+            switchPage('home');
+            
+            const target = document.getElementById('flower-list');
+            if(target) {
+                target.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // ================= 商品詳情彈窗 (前端) =================
+        function openProductModal(id) {
+            const product = MOCK_PRODUCTS.find(p => p.id === id);
+            if (!product) return;
+            activeProduct = product;
+
+            document.getElementById('modal-img').src = product.image_url;
+            document.getElementById('modal-tag').innerText = product.category;
+            document.getElementById('modal-name').innerText = product.name;
+            document.getElementById('modal-price').innerText = `NT$ ${product.price.toLocaleString()}`;
+            document.getElementById('modal-desc').innerText = product.description;
+            document.getElementById('modal-materials').innerText = product.materials;
+            document.getElementById('modal-packaging').innerText = product.packaging || '專屬藝術牛皮紙包裝';
+            document.getElementById('modal-occasion').innerText = (product.category || '日常') + '場合';
+            document.getElementById('modal-stock').innerText = `${product.stock} 件`;
+
+            // 綁定下載 PDF 的模擬按鈕
+            const pdfBtn = document.getElementById('modal-pdf-btn');
+            pdfBtn.onclick = () => showMockPDF(product.pdf_name || 'Care_Instruction.pdf');
+
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        function closeProductModal() {
+            document.getElementById('product-modal').classList.add('hidden');
+            activeProduct = null;
+        }
+
+        function showMockPDF(fileName) {
+            showToast('fa-file-pdf', `📄 正在為您生成並下載 [${fileName}] 花禮專屬照護/行程細節指南...`);
+        }
+
+        // ================= 購物車系統 =================
+        function toggleCart(show) {
+            const drawer = document.getElementById('cart-drawer');
+            if (show) {
+                renderCart();
+                drawer.classList.remove('hidden');
+            } else {
+                drawer.classList.add('hidden');
+            }
+        }
+
+        function addToCart(id, qty = 1) {
+            const product = MOCK_PRODUCTS.find(p => p.id === id);
+            if (!product) return;
+
+            const existing = cart.find(item => item.product.id === id);
+            
+            // 檢查庫存上限
+            const currentQtyInCart = existing ? existing.quantity : 0;
+            if (currentQtyInCart + qty > product.stock) {
+                showToast('fa-circle-xmark', `⚠️ 抱歉！該商品目前剩餘庫存僅剩 ${product.stock} 件`);
+                return;
+            }
+
+            if (existing) {
+                existing.quantity += qty;
+            } else {
+                cart.push({ product, quantity: qty });
+            }
+
+            updateCartBadge();
+            showToast('fa-cart-plus', `🌸 已成功將「${product.name}」放入您的購物車！`);
+        }
+
+        function addCurrentToCart() {
+            if (activeProduct) {
+                addToCart(activeProduct.id, 1);
+                closeProductModal();
+                toggleCart(true);
+            }
+        }
+
+        function changeCartQty(id, diff) {
+            const item = cart.find(item => item.product.id === id);
+            if (!item) return;
+
+            const nextQty = item.quantity + diff;
+            if (nextQty <= 0) {
+                // 刪除項目
+                cart = cart.filter(i => i.product.id !== id);
+                showToast('fa-trash-can', `已將商品自購物車移出`);
+            } else {
+                // 檢查庫存
+                if (nextQty > item.product.stock) {
+                    showToast('fa-circle-xmark', `⚠️ 抱歉！該商品目前剩餘庫存僅剩 ${item.product.stock} 件`);
+                    return;
+                }
+                item.quantity = nextQty;
+            }
+            updateCartBadge();
+            renderCart();
+        }
+
+        function updateCartBadge() {
+            const badge = document.getElementById('cart-badge');
+            if (!badge) return;
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            if (totalItems > 0) {
+                badge.innerText = totalItems;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function renderCart() {
+            const listContainer = document.getElementById('cart-items-list');
+            const subtotalEl = document.getElementById('cart-subtotal');
+            if (!listContainer || !subtotalEl) return;
+            
+            listContainer.innerHTML = '';
+
+            if (cart.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center py-12 text-stone-400">
+                        <i class="fa-solid fa-seedling text-4xl mb-3"></i>
+                        <p class="text-xs">您的購物籃是空的，快去挑選精緻花禮吧！</p>
+                    </div>
+                `;
+                subtotalEl.innerText = `NT$ 0`;
+                return;
+            }
+
+            let subtotal = 0;
+            cart.forEach(item => {
+                const totalItemPrice = item.product.price * item.quantity;
+                subtotal += totalItemPrice;
+
+                const li = document.createElement('li');
+                li.className = 'flex py-6 border-b border-stone-50';
+                li.innerHTML = `
+                    <div class="h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl border border-stone-100 bg-stone-50">
+                        <img src="${item.product.image_url}" alt="${item.product.name}" class="h-full w-full object-cover object-center" onerror="this.src='https://images.unsplash.com/photo-1526047932273-341f2a7631f9?auto=format&fit=crop&w=400&q=80'">
+                    </div>
+                    <div class="ml-4 flex flex-1 flex-col">
+                        <div>
+                            <div class="flex justify-between text-sm font-medium text-stone-900">
+                                <h3 class="line-clamp-1 font-medium">${item.product.name}</h3>
+                                <p class="ml-4 text-brand-600 font-bold">NT$ ${totalItemPrice.toLocaleString()}</p>
+                            </div>
+                            <p class="mt-1 text-xs text-stone-400">NT$ ${item.product.price.toLocaleString()} / 件</p>
+                        </div>
+                        <div class="flex flex-1 items-end justify-between text-xs">
+                            <div class="flex items-center space-x-2 border border-stone-200 rounded-lg p-1 bg-white">
+                                <button onclick="changeCartQty(${item.product.id}, -1)" class="w-5 h-5 text-stone-500 hover:text-brand-600 text-center font-bold">-</button>
+                                <span class="w-6 text-center text-stone-800 font-semibold">${item.quantity}</span>
+                                <button onclick="changeCartQty(${item.product.id}, 1)" class="w-5 h-5 text-stone-500 hover:text-brand-600 text-center font-bold">+</button>
+                            </div>
+                            <button type="button" onclick="changeCartQty(${item.product.id}, -${item.quantity})" class="font-medium text-stone-400 hover:text-brand-600 transition">
+                                <i class="fa-solid fa-trash-can mr-1"></i> 移除
+                            </button>
+                        </div>
+                    </div>
+                `;
+                listContainer.appendChild(li);
+            });
+
+            subtotalEl.innerText = `NT$ ${subtotal.toLocaleString()}`;
+        }
+
+        // ================= 結帳頁面載入 =================
+        function goToCheckout() {
+            if (cart.length === 0) {
+                showToast('fa-circle-xmark', '您的購物車中沒有商品，慢步挑選後再進行結帳唷！');
+                return;
+            }
+            toggleCart(false);
+            switchPage('checkout');
+
+            // 預先帶入會員資訊 (若已登入)
+            if (currentUser) {
+                const nameInput = document.getElementById('checkout-name');
+                const emailInput = document.getElementById('checkout-email');
+                const phoneInput = document.getElementById('checkout-phone');
+                if (nameInput) nameInput.value = currentUser.name || '';
+                if (emailInput) emailInput.value = currentUser.email || '';
+                if (phoneInput) phoneInput.value = currentUser.phone || '';
+            }
+
+            // 載入商品明細
+            const container = document.getElementById('checkout-items');
+            const totalEl = document.getElementById('checkout-total');
+            if (!container || !totalEl) return;
+            
+            container.innerHTML = '';
+
+            let total = 0;
+            cart.forEach(item => {
+                const itemTotal = item.product.price * item.quantity;
+                total += itemTotal;
+
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center py-3 text-xs sm:text-sm text-stone-700";
+                div.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="w-5 h-5 bg-stone-200 text-stone-700 rounded-full flex items-center justify-center text-[10px] font-bold">${item.quantity}x</span>
+                        <span class="font-medium text-stone-800 line-clamp-1">${item.product.name}</span>
+                    </div>
+                    <span class="font-bold text-stone-900">NT$ ${itemTotal.toLocaleString()}</span>
+                `;
+                container.appendChild(div);
+            });
+
+            totalEl.innerText = `NT$ ${total.toLocaleString()}`;
+        }
+
+        // 提交訂單（產生現場取貨付款憑證，並寫入 ordersDb 資料庫）
+        function handlePlaceOrder(event) {
+            event.preventDefault();
+
+            const orderId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
+            const name = document.getElementById('checkout-name').value;
+            const phone = document.getElementById('checkout-phone').value;
+            const rawTime = document.getElementById('checkout-time').value || '';
+            const pickupTime = rawTime.replace('T', ' ');
+
+            let total = 0;
+            let itemsSummary = [];
+            const receiptItemsContainer = document.getElementById('receipt-items');
+            if (receiptItemsContainer) {
+                receiptItemsContainer.innerHTML = '';
+            }
+
+            cart.forEach(item => {
+                const itemTotal = item.product.price * item.quantity;
+                total += itemTotal;
+
+                // 扣減商品實體庫存
+                item.product.stock = Math.max(0, item.product.stock - item.quantity);
+                itemsSummary.push(`${item.product.name} (x${item.quantity})`);
+
+                // 明細列印列
+                if (receiptItemsContainer) {
+                    const itemRow = document.createElement('div');
+                    itemRow.className = "flex justify-between py-2 text-stone-700";
+                    itemRow.innerHTML = `
+                        <span>${item.product.name} (x${item.quantity})</span>
+                        <span class="font-bold">NT$ ${itemTotal.toLocaleString()}</span>
+                    `;
+                    receiptItemsContainer.appendChild(itemRow);
+                }
+            });
+
+            // 存入 Orders 資料庫，以利後台同步結算與數據統計
+            const newOrder = {
+                id: orderId,
+                clientName: name,
+                phone: phone,
+                pickupTime: pickupTime || '未約定時間',
+                totalPrice: total,
+                status: 'unpaid',
+                items: itemsSummary.join(', ')
+            };
+            ordersDb.unshift(newOrder);
+            SafeStorage.setItem('florist_orders', JSON.stringify(ordersDb));
+            SafeStorage.setItem('florist_products', JSON.stringify(MOCK_PRODUCTS));
+
+            // 填入憑證資訊
+            document.getElementById('receipt-id').innerText = orderId;
+            document.getElementById('receipt-client').innerText = name;
+            document.getElementById('receipt-phone').innerText = phone;
+            document.getElementById('receipt-pickup-time').innerText = pickupTime;
+            document.getElementById('receipt-total').innerText = `NT$ ${total.toLocaleString()}`;
+
+            // 重置購物車
+            cart = [];
+            updateCartBadge();
+
+            // 轉到收據頁面
+            switchPage('receipt');
+            showToast('fa-circle-check', '🎉 訂單已成功生成！請查看您的實體付款取貨確認單。');
+        }
+
+        // 模擬寄送郵件確認信
+        function simulateEmailSend() {
+            const emailEl = document.getElementById('checkout-email');
+            const email = emailEl ? emailEl.value : '您填寫的信箱';
+            showToast('fa-paper-plane', `📧 已成功發送實體取貨確認信至 [${email}]！`);
+        }
+
+        // ================= 會員註冊、登入彈窗邏輯 =================
+        function openAuthModal(tab = 'login') {
+            const modal = document.getElementById('auth-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                switchAuthTab(tab);
+            }
+        }
+
+        function closeAuthModal() {
+            const modal = document.getElementById('auth-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        // 更新權限頁籤
+        function switchAuthTab(tab) {
+            const tabLogin = document.getElementById('tab-login');
+            const tabRegister = document.getElementById('tab-register');
+            const formLogin = document.getElementById('form-login');
+            const formRegister = document.getElementById('form-register');
+
+            if (!tabLogin || !tabRegister || !formLogin || !formRegister) return;
+
+            if (tab === 'login') {
+                tabLogin.className = "flex-1 text-center font-bold text-sm text-brand-700 border-b-2 border-brand-700 pb-2";
+                tabRegister.className = "flex-1 text-center font-bold text-sm text-stone-400 pb-2";
+                formLogin.classList.remove('hidden');
+                formRegister.classList.add('hidden');
+            } else {
+                tabRegister.className = "flex-1 text-center font-bold text-sm text-brand-700 border-b-2 border-brand-700 pb-2";
+                tabLogin.className = "flex-1 text-center font-bold text-sm text-stone-400 pb-2";
+                formRegister.classList.remove('hidden');
+                formLogin.classList.add('hidden');
+            }
+        }
+
+        function handleAuthSubmit(event, type) {
+            event.preventDefault();
+
+            if (type === 'login') {
+                const email = document.getElementById('login-email').value.trim();
+                const pw = document.getElementById('login-pw').value;
+
+                // 擬真系統帳號比對
+                const user = usersDb.find(u => u.email === email);
+                if (user) {
+                    if (email === 'admin@test.com' && pw !== 'admin123') {
+                        showToast('fa-triangle-exclamation', '密碼不正確，管理員預設為 admin123');
+                        return;
+                    }
+                    currentUser = {
+                        name: user.name,
+                        email: user.email,
+                        phone: user.phone,
+                        role: user.role
+                    };
+                    showToast('fa-user-check', `歡迎回來，${currentUser.name}！`);
+                } else {
+                    // 訪客保護
+                    currentUser = {
+                        name: '體驗貴賓',
+                        email: email,
+                        phone: '0912-345-678',
+                        role: 'user'
+                    };
+                    showToast('fa-user-check', `體驗登入成功！`);
+                }
+            } else {
+                const name = document.getElementById('reg-name').value;
+                const email = document.getElementById('reg-email').value;
+                const phone = document.getElementById('reg-phone').value;
+
+                // 註冊加入
+                currentUser = {
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    role: 'user'
+                };
+                
+                // 寫入名單資料庫
+                const exists = usersDb.some(u => u.email === email);
+                if (!exists) {
+                    usersDb.push({
+                        id: Date.now(),
+                        name: name,
+                        email: email,
+                        phone: phone,
+                        role: 'user'
+                    });
+                    SafeStorage.setItem('florist_users', JSON.stringify(usersDb));
+                }
+
+                showToast('fa-user-plus', `註冊成功！帳號已立即開通，已自動登入！`);
+            }
+
+            SafeStorage.setItem('mock_user', JSON.stringify(currentUser));
+            updateUserNavUI();
+            closeAuthModal();
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            SafeStorage.removeItem('mock_user');
+            updateUserNavUI();
+            switchPage('home');
+            showToast('fa-right-from-bracket', '已成功登出會員帳號。');
+        }
+
+        function updateUserNavUI() {
+            const userNavArea = document.getElementById('user-nav-area');
+            if (!userNavArea) return;
+            
+            if (currentUser) {
+                let adminBtn = '';
+                // 若是 Admin 則呈現後台入口
+                if (currentUser.role === 'admin') {
+                    adminBtn = `<button onclick="switchPage('admin')" class="bg-brand-600 hover:bg-brand-700 text-stone-900 text-xs py-1.5 px-3.5 rounded-full transition mr-1 font-semibold"><i class="fa-solid fa-user-gear mr-1"></i> 進入管理後台</button>`;
+                }
+                userNavArea.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        ${adminBtn}
+                        <span class="text-xs text-stone-600 font-medium hidden sm:inline"><i class="fa-regular fa-user mr-1 text-brand-500"></i> ${currentUser.name}</span>
+                        <button onclick="handleLogout()" class="text-stone-400 hover:text-brand-600 text-xs font-semibold py-1.5 px-3 rounded-full border border-stone-200 hover:border-brand-200 transition">登出</button>
+                    </div>
+                `;
+            } else {
+                userNavArea.innerHTML = `
+                    <button onclick="openAuthModal('login')" class="text-stone-600 hover:text-brand-600 transition font-medium mr-2">登入</button>
+                    <button onclick="openAuthModal('register')" class="bg-brand-600 hover:bg-brand-700 text-stone-900 px-4 py-2 rounded-full text-xs font-medium transition shadow-sm">註冊帳號</button>
+                `;
+            }
+        }
+
+        // ================= 輕量彈窗通知 Toast =================
+        function showToast(iconClass, message) {
+            const toast = document.getElementById('toast');
+            const iconEl = document.getElementById('toast-icon');
+            const msgEl = document.getElementById('toast-msg');
+
+            if (!toast || !iconEl || !msgEl) return;
+
+            iconEl.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
+            msgEl.innerText = message;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+
+        // ================= 通用自訂確認對話框控制機制 (z-index 提高至 11000) =================
+        let confirmActionCallback = null;
+
+        function showConfirm(message, callback) {
+            const modal = document.getElementById('confirm-modal');
+            const msgEl = document.getElementById('confirm-message');
+            if (!modal || !msgEl) return;
+
+            msgEl.innerText = message;
+            confirmActionCallback = callback;
+            modal.classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirm-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+            confirmActionCallback = null;
+        }
+
+        // 綁定通用確認按鈕之點擊事件
+        document.getElementById('confirm-submit-btn').onclick = function() {
+            if (typeof confirmActionCallback === 'function') {
+                confirmActionCallback();
+            }
+            closeConfirmModal();
+        };
+
+        // ================= 管理員後端 (Admin Panel Logic) =================
+        // 快捷切換前後台 (調試鈕專用)
+        function toggleQuickAdminView() {
+            const adminPage = document.getElementById('page-admin');
+            if (adminPage.classList.contains('hidden')) {
+                switchPage('admin');
+                showToast('fa-user-shield', '已進入管理員後台檢視');
+            } else {
+                switchPage('home');
+                showToast('fa-store', '已返回前端購物空間');
+            }
+        }
+
+        // 切換後台內部分頁
+        function switchAdminTab(tabId) {
+            activeAdminTab = tabId;
+            document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+                btn.className = "admin-tab-btn flex items-center space-x-3 px-5 py-3.5 rounded-xl text-left text-sm font-medium transition duration-200 bg-white text-stone-600 hover:bg-stone-100";
+            });
+
+            const activeBtn = document.getElementById(`btn-admin-tab-${tabId}`);
+            if (activeBtn) {
+                activeBtn.className = "admin-tab-btn flex items-center space-x-3 px-5 py-3.5 rounded-xl text-left text-sm font-medium transition duration-200 bg-brand-600 text-stone-900 shadow-sm";
+            }
+
+            document.querySelectorAll('.admin-sub-section').forEach(sec => {
+                sec.classList.add('hidden');
+            });
+            document.getElementById(`admin-sub-${tabId}`).classList.remove('hidden');
+
+            if (tabId === 'dashboard') renderAdminDashboard();
+            if (tabId === 'products') renderAdminProducts();
+            if (tabId === 'members') renderAdminMembers();
+            if (tabId === 'orders') renderAdminOrders();
+        }
+
+        // (1) 統計數據更新
+        function renderAdminDashboard() {
+            // 計算本日營業額
+            const revenue = ordersDb.reduce((sum, ord) => ord.status === 'paid' ? sum + ord.totalPrice : sum, 0);
+            document.getElementById('stat-revenue').innerText = `NT$ ${revenue.toLocaleString()}`;
+            document.getElementById('stat-orders-count').innerText = `${ordersDb.length} 筆`;
+            document.getElementById('stat-users-count').innerText = `${usersDb.length} 人`;
+            document.getElementById('stat-products-count').innerText = `${MOCK_PRODUCTS.length} 件`;
+        }
+
+        // (2) 商品自定義與維護表格渲染
+        function renderAdminProducts() {
+            const tbody = document.getElementById('admin-products-table');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            MOCK_PRODUCTS.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-stone-50 transition border-b border-stone-100";
+                tr.innerHTML = `
+                    <td class="p-4">
+                        <img src="${p.image_url}" alt="${p.name}" class="w-12 h-12 object-cover rounded-lg border border-stone-200" onerror="this.src='https://images.unsplash.com/photo-1526047932273-341f2a7631f9?auto=format&fit=crop&w=100&q=80'">
+                    </td>
+                    <td class="p-4 font-medium">
+                        <div class="text-stone-900 font-bold text-xs sm:text-sm">${p.name}</div>
+                        <div class="text-[10px] text-brand-700 mt-0.5">${p.category}</div>
+                    </td>
+                    <td class="p-4 font-semibold text-stone-800">NT$ ${p.price.toLocaleString()}</td>
+                    <td class="p-4">
+                        <span class="px-2 py-1 rounded bg-stone-100 text-stone-700 font-bold">${p.stock} 件</span>
+                    </td>
+                    <td class="p-4 text-stone-500 max-w-xs truncate">
+                        <div>花材: ${p.materials}</div>
+                        <div class="text-[10px] text-stone-400 mt-0.5">場合: ${p.occasions || '-'}</div>
+                    </td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center space-x-2">
+                            <button onclick="openAdminProductModal(${p.id})" class="bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold px-2.5 py-1.5 rounded-lg transition text-[10px]">
+                                <i class="fa-solid fa-pen-to-square"></i> 編輯
+                            </button>
+                            <button onclick="handleAdminProductDelete(${p.id})" class="bg-red-50 hover:bg-red-100 text-red-600 font-semibold px-2.5 py-1.5 rounded-lg transition text-[10px]">
+                                <i class="fa-solid fa-trash-can"></i> 刪除
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 商品編輯彈窗開啟
+        function openAdminProductModal(id) {
+            const modal = document.getElementById('admin-product-modal');
+            const title = document.getElementById('admin-product-modal-title');
+            document.getElementById('admin-product-form').reset();
+
+            if (id === null) {
+                title.innerText = "新增花藝商品";
+                document.getElementById('admin-prod-id').value = "";
+            } else {
+                title.innerText = "編輯花藝商品設定";
+                const p = MOCK_PRODUCTS.find(p => p.id === id);
+                if (p) {
+                    document.getElementById('admin-prod-id').value = p.id;
+                    document.getElementById('admin-prod-name').value = p.name;
+                    document.getElementById('admin-prod-price').value = p.price;
+                    document.getElementById('admin-prod-stock').value = p.stock;
+                    document.getElementById('admin-prod-category').value = p.category;
+                    document.getElementById('admin-prod-occasion').value = p.occasions || '';
+                    document.getElementById('admin-prod-materials').value = p.materials;
+                    document.getElementById('admin-prod-packaging').value = p.packaging || '';
+                    document.getElementById('admin-prod-desc').value = p.description || '';
+                    document.getElementById('admin-prod-image').value = p.image_url || '';
+                }
+            }
+            modal.classList.remove('hidden');
+        }
+
+        function closeAdminProductModal() {
+            document.getElementById('admin-product-modal').classList.add('hidden');
+        }
+
+        // 模擬維護上傳
+        function simulateFileUpload(type) {
+            if (type === 'image') {
+                const imgUrl = `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 99999999)}?auto=format&fit=crop&w=600&q=80`;
+                document.getElementById('admin-prod-image').value = imgUrl;
+                showToast('fa-circle-check', '📷 模擬成功：高質感花束實體照片上傳成功！已生成預覽網址。');
+            } else {
+                showToast('fa-file-pdf', '📄 模擬成功：對應手作體驗與日程 PDF 檔上傳成功！已與此商品保養指南關聯。');
+            }
+        }
+
+        // 商品保存
+        function handleAdminProductSave(event) {
+            event.preventDefault();
+
+            const idVal = document.getElementById('admin-prod-id').value;
+            const name = document.getElementById('admin-prod-name').value;
+            const price = parseInt(document.getElementById('admin-prod-price').value);
+            const stock = parseInt(document.getElementById('admin-prod-stock').value);
+            const category = document.getElementById('admin-prod-category').value;
+            const occasion = document.getElementById('admin-prod-occasion').value;
+            const materials = document.getElementById('admin-prod-materials').value;
+            const packaging = document.getElementById('admin-prod-packaging').value;
+            const desc = document.getElementById('admin-prod-desc').value;
+            let img = document.getElementById('admin-prod-image').value.trim();
+
+            if (!img) {
+                img = 'https://images.unsplash.com/photo-1526047932273-341f2a7631f9?auto=format&fit=crop&w=600&q=80';
+            }
+
+            if (idVal === "") {
+                const newP = {
+                    id: Date.now(),
+                    name, price, stock, category,
+                    occasions: occasion,
+                    materials,
+                    packaging,
+                    description: desc,
+                    image_url: img,
+                    pdf_name: 'Custom_Guide.pdf'
+                };
+                MOCK_PRODUCTS.push(newP);
+                showToast('fa-circle-check', `🎉 成功新增商品: ${name}`);
+            } else {
+                const p = MOCK_PRODUCTS.find(p => p.id === parseInt(idVal));
+                if (p) {
+                    p.name = name;
+                    p.price = price;
+                    p.stock = stock;
+                    p.category = category;
+                    p.occasions = occasion;
+                    p.materials = materials;
+                    p.packaging = packaging;
+                    p.description = desc;
+                    p.image_url = img;
+                    showToast('fa-circle-check', `📝 已更新商品設定: ${name}`);
+                }
+            }
+
+            SafeStorage.setItem('florist_products', JSON.stringify(MOCK_PRODUCTS));
+            closeAdminProductModal();
+            renderAdminProducts();
+            renderProducts();
+        }
+
+        function handleAdminProductDelete(id) {
+            const p = MOCK_PRODUCTS.find(item => item.id === id);
+            const name = p ? p.name : '此商品';
+            
+            showConfirm(`您確定要將「${name}」下架並永久刪除嗎？`, function() {
+                MOCK_PRODUCTS = MOCK_PRODUCTS.filter(item => item.id !== id);
+                SafeStorage.setItem('florist_products', JSON.stringify(MOCK_PRODUCTS));
+                showToast('fa-trash-can', '已成功將商品下架並自前台移除');
+                renderAdminProducts();
+                renderProducts();
+            });
+        }
+
+        // (3) 會員資料維護
+        function renderAdminMembers() {
+            const tbody = document.getElementById('admin-members-table');
+            const searchVal = document.getElementById('admin-member-search').value.toLowerCase().trim();
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const filtered = usersDb.filter(u => {
+                return u.name.toLowerCase().includes(searchVal) || 
+                       u.email.toLowerCase().includes(searchVal) || 
+                       u.phone.includes(searchVal);
+            });
+
+            filtered.forEach(m => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-stone-50 transition border-b border-stone-100";
+                tr.innerHTML = `
+                    <td class="p-4 font-bold text-stone-900 text-xs sm:text-sm">${m.name}</td>
+                    <td class="p-4 font-mono text-xs">${m.email}</td>
+                    <td class="p-4 text-xs">${m.phone}</td>
+                    <td class="p-4">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${m.role === 'admin' ? 'bg-amber-100 text-amber-800' : 'bg-stone-100 text-stone-600'}">
+                            ${m.role}
+                        </span>
+                    </td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center space-x-2">
+                            <button onclick="openAdminMemberModal(${m.id})" class="bg-stone-100 hover:bg-stone-200 text-stone-700 px-2 py-1 rounded transition text-[10px] font-semibold">
+                                編輯
+                            </button>
+                            <button onclick="handleAdminMemberDelete(${m.id})" class="bg-red-50 hover:bg-red-100 text-red-600 px-2 py-1 rounded transition text-[10px] font-semibold" ${m.email === 'admin@test.com' ? 'disabled' : ''}>
+                                刪除
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openAdminMemberModal(id) {
+            const modal = document.getElementById('admin-member-modal');
+            const title = document.getElementById('admin-member-modal-title');
+            document.getElementById('admin-member-form').reset();
+
+            if (id === null) {
+                title.innerText = "新增註冊會員";
+                document.getElementById('admin-mem-id').value = "";
+            } else {
+                title.innerText = "編輯會員帳號資料";
+                const m = usersDb.find(u => u.id === id);
+                if (m) {
+                    document.getElementById('admin-mem-id').value = m.id;
+                    document.getElementById('admin-mem-name').value = m.name;
+                    document.getElementById('admin-mem-email').value = m.email;
+                    document.getElementById('admin-mem-phone').value = m.phone;
+                    document.getElementById('admin-mem-role').value = m.role;
+                }
+            }
+            modal.classList.remove('hidden');
+        }
+
+        function closeAdminMemberModal() {
+            document.getElementById('admin-member-modal').classList.add('hidden');
+        }
+
+        function handleAdminMemberSave(event) {
+            event.preventDefault();
+            const idVal = document.getElementById('admin-mem-id').value;
+            const name = document.getElementById('admin-mem-name').value;
+            const email = document.getElementById('admin-mem-email').value;
+            const phone = document.getElementById('admin-mem-phone').value;
+            const role = document.getElementById('admin-mem-role').value;
+
+            if (idVal === "") {
+                usersDb.push({
+                    id: Date.now(),
+                    name, email, phone, role
+                });
+                showToast('fa-user-plus', '已手動註冊並新增會員帳號');
+            } else {
+                const m = usersDb.find(u => u.id === parseInt(idVal));
+                if (m) {
+                    m.name = name;
+                    m.email = email;
+                    m.phone = phone;
+                    m.role = role;
+                    showToast('fa-user-check', '會員資料已完成修改並儲存');
+                }
+            }
+
+            SafeStorage.setItem('florist_users', JSON.stringify(usersDb));
+            closeAdminMemberModal();
+            renderAdminMembers();
+        }
+
+        function handleAdminMemberDelete(id) {
+            const m = usersDb.find(u => u.id === id);
+            if (m && m.email === 'admin@test.com') {
+                showToast('fa-circle-xmark', '安全保護：無法刪除超級管理員帳號！');
+                return;
+            }
+            const name = m ? m.name : '此用戶';
+
+            showConfirm(`您確認要永久註銷會員「${name}」的帳號嗎？此動作將刪除其所有權限。`, function() {
+                usersDb = usersDb.filter(u => u.id !== id);
+                SafeStorage.setItem('florist_users', JSON.stringify(usersDb));
+                showToast('fa-trash-can', '會員帳號已成功自系統中註銷。');
+                renderAdminMembers();
+            });
+        }
+
+        // (4) 訂單現場結算
+        function renderAdminOrders() {
+            const tbody = document.getElementById('admin-orders-table');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            ordersDb.forEach(o => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-stone-50 transition border-b border-stone-100";
+                
+                const statusBadge = o.status === 'paid'
+                    ? `<button onclick="toggleOrderStatus('${o.id}')" class="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded-full font-bold text-[10px] transition"><i class="fa-solid fa-circle-check mr-1"></i> 已結算 (Paid)</button>`
+                    : `<button onclick="toggleOrderStatus('${o.id}')" class="bg-amber-100 hover:bg-amber-200 text-amber-700 px-3 py-1 rounded-full font-bold text-[10px] transition"><i class="fa-solid fa-circle-exclamation mr-1"></i> 未付款 (Unpaid)</button>`;
+
+                tr.innerHTML = `
+                    <td class="p-4 font-mono font-bold text-brand-700 text-xs">${o.id}</td>
+                    <td class="p-4 text-xs">
+                        <div class="font-bold text-stone-900">${o.clientName}</div>
+                        <div class="text-[10px] text-stone-400 mt-0.5">${o.phone}</div>
+                    </td>
+                    <td class="p-4 text-xs">${o.pickupTime}</td>
+                    <td class="p-4 font-bold text-stone-900 text-xs">NT$ ${o.totalPrice.toLocaleString()}</td>
+                    <td class="p-4 text-center">${statusBadge}</td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center space-x-2">
+                            <button onclick="handleAdminOrderDelete('${o.id}')" class="bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1.5 rounded-lg transition text-[10px] font-bold">
+                                刪除
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function toggleOrderStatus(id) {
+            const o = ordersDb.find(ord => ord.id === id);
+            if (o) {
+                o.status = o.status === 'paid' ? 'unpaid' : 'paid';
+                SafeStorage.setItem('florist_orders', JSON.stringify(ordersDb));
+                showToast('fa-calculator', `已手動變更訂單 [${id}] 付款狀態！`);
+                renderAdminOrders();
+            }
+        }
+
+        function handleAdminOrderDelete(id) {
+            showConfirm(`您確定要永久移除訂單「${id}」嗎？`, function() {
+                ordersDb = ordersDb.filter(ord => ord.id !== id);
+                SafeStorage.setItem('florist_orders', JSON.stringify(ordersDb));
+                showToast('fa-trash-can', '預訂訂單已移出系統。');
+                renderAdminOrders();
+            });
+        }
+
+        // ================= 核心啟動與資料庫初始化 =================
+        function initializeApp() {
+            try {
+                // 1. 初始化商品資料庫
+                const storedProducts = SafeStorage.getItem('florist_products');
+                if (storedProducts) {
+                    try {
+                        MOCK_PRODUCTS = JSON.parse(storedProducts);
+                    } catch(e) {
+                        MOCK_PRODUCTS = [...DEFAULT_PRODUCTS];
+                    }
+                } else {
+                    MOCK_PRODUCTS = [...DEFAULT_PRODUCTS];
+                    SafeStorage.setItem('florist_products', JSON.stringify(MOCK_PRODUCTS));
+                }
+
+                // 2. 初始化會員資料庫
+                const storedUsers = SafeStorage.getItem('florist_users');
+                if (storedUsers) {
+                    try {
+                        usersDb = JSON.parse(storedUsers);
+                    } catch(e) {
+                        usersDb = [...DEFAULT_USERS];
+                    }
+                } else {
+                    usersDb = [...DEFAULT_USERS];
+                    SafeStorage.setItem('florist_users', JSON.stringify(usersDb));
+                }
+
+                // 3. 初始化訂單資料庫
+                const storedOrders = SafeStorage.getItem('florist_orders');
+                if (storedOrders) {
+                    try {
+                        ordersDb = JSON.parse(storedOrders);
+                    } catch(e) {
+                        ordersDb = [...DEFAULT_ORDERS];
+                    }
+                } else {
+                    ordersDb = [...DEFAULT_ORDERS];
+                    SafeStorage.setItem('florist_orders', JSON.stringify(ordersDb));
+                }
+
+                // 4. 前端渲染
+                renderProducts();
+                updateCartBadge();
+                updateUserNavUI();
+                
+                // 5. 載入快取登入狀態
+                const storedUser = SafeStorage.getItem('mock_user');
+                if (storedUser) {
+                    try {
+                        currentUser = JSON.parse(storedUser);
+                        updateUserNavUI();
+                    } catch(e) {
+                        console.error("解析使用者快取失敗", e);
+                    }
+                }
+                console.log("42燕婷有限公司 擬真前後台系統加載完畢！");
+            } catch (err) {
+                console.error("啟動過程出錯:", err);
+            }
+        }
+
+        // DOMContentLoaded 載入，極速就位
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp();
+        }
+    </script>
+</body>
+</html>
